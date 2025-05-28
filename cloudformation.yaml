@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda and DynamoDB table for processing form data with OpenAI.
+
+Parameters:
+  CodeS3Bucket:
+    Type: String
+    Description: S3 bucket containing the Lambda deployment package
+  CodeS3Key:
+    Type: String
+    Description: S3 key of the Lambda deployment package
+  OpenAIApiKey:
+    Type: String
+    NoEcho: true
+    Description: API key for OpenAI
+
+Resources:
+  FormTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: FormResults
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+
+  GPTFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: GPTHandler
+      Handler: GPT.handler
+      Runtime: python3.9
+      Code:
+        S3Bucket: !Ref CodeS3Bucket
+        S3Key: !Ref CodeS3Key
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref FormTable
+          OPENAI_API_KEY: !Ref OpenAIApiKey
+
+Outputs:
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref GPTFunction
+  FormTableName:
+    Description: DynamoDB table name
+    Value: !Ref FormTable
