@@ -1,6 +1,8 @@
 # Hawkmage
 
 A simple public app that generates a StackHawk `stackhawk.yml` file using OpenAI.
+For a detailed look at how the application is intended to be deployed and
+operated, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Setup
 
